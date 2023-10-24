@@ -106,6 +106,7 @@ func (r *Reconciler) prometheusRules() (runtime.Object, reconciler.DesiredState,
 					Annotations: map[string]string{
 						"summary":     `Fluentd retry count has been "{{ $value }}" for the last 10 minutes.`,
 						"description": `Fluentd retry count has been "{{ $value }}" for the last 10 minutes.`,
+						"runbook_url": `https://github.com/kube-logging/logging-operator/tree/master/docs/runbooks/fluentd.md#FluentdRetry`,
 					},
 				},
 				{
