@@ -1,0 +1,45 @@
+# This workflow installs logging
+# verify the samples
+
+name: End2End Testing
+on:
+  push:
+
+jobs:
+  end2end:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+    - name: Set up K3S
+      uses: debianmaster/actions-k3s@master
+      id: k3s
+      with:
+        version: 'v1.30.1-k3s1'
+    - name: Check Cluster
+      run: |
+        kubectl get nodes
+    - name: Setup Helm
+      run: |
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        helm version
+    - name: Install Log Generator
+      run: |
+        helm repo add kube-logging https://kube-logging.github.io/helm-charts
+        helm upgrade --install log-generator kube-logging/log-generator --set app.golang=true
+    - name: Check Pods
+      run: |
+        kubectl get pods
+    - name: Check Log Generator
+      run: |
+        kubectl create job curl --image=mtr.devops.telekom.de/mcsps/curl:7.65.3 -- curl -f -v -H 'Authorization: Bearer 12345678' -H 'Content-Type: application/json'  http://canary-00-canary-bot-api:8080/api/v1/samples
+        kubectl wait --for=condition=available deployments.apps/log-generator
+        STATUS=$(kubectl get deployments.apps/log-generator -o jsonpath={.status.availableReplicas})
+        if [[ $STATUS  -ne  1 ]]
+        then
+          echo "Log Generator failed"
+          kubectl describe  deployments.apps/log-generator
+          exit 1
+        else
+          echo "Log Generator OK"
+        fi
