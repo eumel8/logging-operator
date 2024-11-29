@@ -42,3 +42,4 @@ jobs:
         else
           echo "Log Generator OK"
         fi
+        kubectl get pods -A
